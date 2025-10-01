@@ -16,7 +16,7 @@ interface UserDao {
     @Delete
     suspend fun delete(user: User)
 
-    // 👉 Obtener el último usuario insertado
+    // Obtener el último usuario insertado
     @Query("SELECT * FROM User ORDER BY uid DESC LIMIT 1")
     suspend fun getLastUser(): User?
 }

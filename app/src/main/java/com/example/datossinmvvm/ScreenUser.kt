@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.room.Room
@@ -22,7 +23,7 @@ fun ScreenUser() {
     var id by remember { mutableStateOf("") }
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
-    var dataUser by remember { mutableStateOf("") }
+    var dataUser = remember { mutableStateOf("") }
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -31,37 +32,43 @@ fun ScreenUser() {
             TopAppBar(
                 title = { Text("Gestión de Usuarios") },
                 actions = {
-                    // 👉 Botón agregar
-                    IconButton(onClick = {
-                        val user = User(firstName = firstName, lastName = lastName)
-                        coroutineScope.launch {
-                            AgregarUsuario(user = user, dao = dao)
+                    // Botón Agregar
+                    TextButton(
+                        onClick = {
+                            val user = User(firstName = firstName, lastName = lastName)
+                            coroutineScope.launch {
+                                AgregarUsuario(user = user, dao = dao)
+                            }
+                            firstName = ""
+                            lastName = ""
                         }
-                        firstName = ""
-                        lastName = ""
-                    }) {
-                        Text("Agregar")
+                    ) {
+                        Text("Agregar", color = MaterialTheme.colorScheme.secondary)
                     }
 
-                    // 👉 Botón listar
-                    IconButton(onClick = {
-                        coroutineScope.launch {
-                            val data = getUsers(dao = dao)
-                            dataUser = data
+                    // Botón Listar
+                    TextButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                val data = getUsers(dao = dao)
+                                dataUser.value = data
+                            }
                         }
-                    }) {
-                        Text("Listar")
+                    ) {
+                        Text("Listar", color = MaterialTheme.colorScheme.secondary)
                     }
 
-                    // 👉 Botón eliminar último
-                    IconButton(onClick = {
-                        coroutineScope.launch {
-                            EliminarUltimo(dao = dao)
-                            val data = getUsers(dao = dao)
-                            dataUser = data
+                    // Botón Eliminar último
+                    TextButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                EliminarUltimoUsuario(dao = dao)
+                                val data = getUsers(dao = dao)
+                                dataUser.value = data
+                            }
                         }
-                    }) {
-                        Text("Eliminar")
+                    ) {
+                        Text("Eliminar", color = MaterialTheme.colorScheme.secondary)
                     }
                 }
             )
@@ -69,34 +76,47 @@ fun ScreenUser() {
     ) { paddingValues ->
         Column(
             modifier = Modifier
-                .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp)
+                .fillMaxSize()
         ) {
-            Spacer(Modifier.height(50.dp))
+            Spacer(Modifier.height(20.dp))
+
             TextField(
                 value = id,
                 onValueChange = { id = it },
                 label = { Text("ID (solo lectura)") },
                 readOnly = true,
-                singleLine = true
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
             )
+
+            Spacer(Modifier.height(12.dp))
+
             TextField(
                 value = firstName,
                 onValueChange = { firstName = it },
-                label = { Text("First Name:") },
-                singleLine = true
+                label = { Text("First Name") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
             )
+
+            Spacer(Modifier.height(12.dp))
+
             TextField(
                 value = lastName,
                 onValueChange = { lastName = it },
-                label = { Text("Last Name:") },
-                singleLine = true
+                label = { Text("Last Name") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
             )
+
             Spacer(Modifier.height(20.dp))
+
             Text(
-                text = dataUser,
-                fontSize = 20.sp
+                text = dataUser.value,
+                fontSize = 18.sp,
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }
@@ -114,7 +134,7 @@ suspend fun getUsers(dao: UserDao): String {
     val users = dao.getAll()
     var rpta = ""
     users.forEach { user ->
-        rpta += "${user.uid} | ${user.firstName} - ${user.lastName}\n"
+        rpta += "${user.firstName} - ${user.lastName}\n"
     }
     return rpta
 }
@@ -127,13 +147,20 @@ suspend fun AgregarUsuario(user: User, dao: UserDao) {
     }
 }
 
-suspend fun EliminarUltimo(dao: UserDao) {
+suspend fun EliminarUltimoUsuario(dao: UserDao) {
     try {
-        val ultimo = dao.getLastUser()
-        if (ultimo != null) {
+        val users = dao.getAll()
+        if (users.isNotEmpty()) {
+            val ultimo = users.last()
             dao.delete(ultimo)
         }
     } catch (e: Exception) {
         Log.e("User", "Error delete: ${e.message}")
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun DefaultPreview() {
+    ScreenUser()
 }
